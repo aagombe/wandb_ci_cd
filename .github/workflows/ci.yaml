@@ -5,6 +5,12 @@ jobs:
   Init-job:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: hello
         run: echo |
           echo "hello world"
+      - name : run python script
+        run: |
+          ppi install -r requirements.txt
+          python ci.py
+          
