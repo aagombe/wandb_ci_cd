@@ -1,0 +1,14 @@
+name: trigger-demo
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  trigger-demo:
+    runs-on: ubuntu-lagesg
+    steps:
+    - run: echo "trigger job"
+      
