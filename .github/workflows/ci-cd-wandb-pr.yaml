@@ -58,16 +58,16 @@ jobs:
         report.blocks = report.blocks[:1] + [pg] + report.blocks[1:]
         report.save()
 
-        - name: Make a comment
-        shell: python
-        run: |
+    - name: Make a comment
+      shell: python
+      run: |
           import os
           from ghapi.core import GhApi
           owner,repo = os.environ['REPO'].split('/')
           api = GhApi(owner=owner, repo=repo)
           api.issues.create_comment(os.environ['NUMBER'], f"Hi! check the comparison in the link {report.url}")
-        env:
-          NUMBER: ${{ github.event.number }} 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
+      env:
+        NUMBER: ${{ github.event.number }} 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO: ${{ github.repository }}
         
