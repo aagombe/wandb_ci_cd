@@ -12,62 +12,55 @@ env:
   
 jobs:
   search-pr-comment: 
-    if: (github.event.issue.pull_request != null)
+    if: (github.event.issue.pull_request != null) && contains(github.event.comment.body, '/wandb')
     runs-on: ubuntu-latest
     steps:
+
+    - name: Get repo contents
+      uses: actions/checkout@v3
+
     - name: install dependencies
       run: pip install ghapi 
       
-    - name: scan payload  
-      run: echo "PAYLOAD:\n${PAYLOAD}\n"
-      env:
-        PAYLOAD: ${{ toJSON(github.event) }}
-    - name: filter for wandb comment
-      id: filter
-      if: contains(github.event.comment.body, env.PR_COMMENT)
-      run: echo "wandb comment detected"
-
-    - name: Parse value from the pr command
-      if: steps.filter.outcome == 'success'
-      id: get-run-id
+    - name: Parse value from the command
+      id: get-runid-value
       shell: python
       run: |
-        import os, wandb
-        import wandb.apis.reports as wr
+        import re, os
         comment = os.getenv('PR_COMMENT', '')
-        words = comment.split(' ')
-        pr_runid = words[ words.index(${{ env.MAGIC_COMMENT }}) +1 ]
+        match = re.search('/wandb[\s+](\S+)', comment)
 
-        PROJECT = 'cicd-quickstart'
-        ENTITY = 'aagombe7'
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+          if match:
+            print(f'VAL_FOUND=true', file=f)
+            print(f'RUN_ID={match.group(1)}', file=f)
+          else:
+            print(f'VAL_FOUND=false', file=f)
+      env:
+        PR_COMMENT: ${{ github.event.comment.body }}
 
-    - name: connect to wandb
-        api = wandb.Api()
-        baseline_run_name = api.run(f"{ENTITY}/{PROJECT}/{BASELINE}").name
-        pr_run_name = api.run("{ENTITY}/{PROJECT}/{pr_runid}").name
-
-    - name: create report  
-        report = wr.Report(
-            entity=ENTITY,
-            project=PROJECT,
-            title='Compare Runs',
-            description="A comparing runs from pull request"
-        )  
-        pg = wr.PanelGrid(runsets=[wr.Runset(ENTITY, PROJECT, "Run Comparison").set_filters_with_python_expr(f"Name in ['{baseline_run_name}', '{pr_run_name}']")], panels=[wr.RunComparer(diff_only='split', layout={'w': 24, 'h': 15})])
+    - name: Generate the comparison report
+      if: steps.get-runid-value.outputs.VAL_FOUND == 'true'
+      id: wandb-report
+      run: python generate_baseline_pr_report.py
+      env:
+        RUN_ID: "${{ steps.get-runid-value.outputs.RUN_ID }}"
+        WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
+        PROJECT: 'cicd-quickstart'
+        ENTITY: 'aagombe7'
         
-        report.blocks = report.blocks[:1] + [pg] + report.blocks[1:]
-        report.save()
-
-        - name: Make a comment
-        shell: python
-        run: |
-          import os
-          from ghapi.core import GhApi
-          owner,repo = os.environ['REPO'].split('/')
-          api = GhApi(owner=owner, repo=repo)
-          api.issues.create_comment(os.environ['NUMBER'], f"Hi! check the comparison in the link {report.url}")
-        env:
-          NUMBER: ${{ github.event.number }} 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
+    - name: Make a comment with the GitHub API
+      uses: actions/github-script@v6
+      if: steps.wandb-report.outcome == 'success' 
+      with:
+        script: |
+           var msg = `A comparison between the linked run and baseline is available [in this report](${process.env.REPORT_URL})`
+           github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: msg
+            });
+      env:
+        REPORT_URL: "${{ steps.wandb-report.outputs.REPORT_URL }}"
         
