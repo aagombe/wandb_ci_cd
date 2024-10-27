@@ -3,6 +3,7 @@ on:
   issue_comment:
     branches:
       - main 
+  workflow_dispatch:
 
 
 permissions:
