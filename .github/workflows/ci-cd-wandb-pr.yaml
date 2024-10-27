@@ -34,6 +34,8 @@ jobs:
       run: |
         import os, wandb
         import wandb.apis.reports as wr
+        from ghapi.core import GhApi
+        
         comment = os.getenv('PR_COMMENT', '')
         words = comment.split(' ')
         pr_runid = words[ words.index(${{ env.MAGIC_COMMENT }}) +1 ]
@@ -45,8 +47,7 @@ jobs:
         api = wandb.Api()
         baseline_run_name = api.run(f"{ENTITY}/{PROJECT}/{BASELINE}").name
         pr_run_name = api.run("{ENTITY}/{PROJECT}/{pr_runid}").name
-
-    - name: create report  
+ 
         report = wr.Report(
             entity=ENTITY,
             project=PROJECT,
@@ -58,14 +59,10 @@ jobs:
         report.blocks = report.blocks[:1] + [pg] + report.blocks[1:]
         report.save()
 
-    - name: Make a comment
-      shell: python
-      run: |
-          import os
-          from ghapi.core import GhApi
-          owner,repo = os.environ['REPO'].split('/')
-          api = GhApi(owner=owner, repo=repo)
-          api.issues.create_comment(os.environ['NUMBER'], f"Hi! check the comparison in the link {report.url}")
+        owner,repo = os.environ['REPO'].split('/')
+        api = GhApi(owner=owner, repo=repo)
+        api.issues.create_comment(os.environ['NUMBER'], f"Hi! check the comparison in the link {report.url}")
+        
       env:
         NUMBER: ${{ github.event.number }} 
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
