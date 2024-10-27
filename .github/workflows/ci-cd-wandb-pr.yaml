@@ -1,14 +1,10 @@
 name: Listen to pull request and generate wandb report
 on: issue_comment
+
 permissions:
   contents: read
   issues: write
   pull-requests: write
-  
-env:
-  PR_COMMENT: "/wandb" 
-  BASELINE: ${{ secrets.BASELINE_RUN_ID }}
-  WANDB_API_KEY: ${{ secrets.WANDB_API_KEYS }}
   
 jobs:
   search-pr-comment: 
@@ -20,7 +16,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: install dependencies
-      run: pip install ghapi 
+      run: pip install ghapi wandb
       
     - name: Parse value from the command
       id: get-runid-value
@@ -45,9 +41,10 @@ jobs:
       run: python generate_baseline_pr_report.py
       env:
         RUN_ID: "${{ steps.get-runid-value.outputs.RUN_ID }}"
-        WANDB_API_KEY: ${{ secrets.WANDB_API_KEY }}
-        PROJECT: 'cicd-quickstart'
-        ENTITY: 'aagombe7'
+        WANDB_API_KEY: ${{ secrets.WANDB_API_KEYS }}
+        WANDB_PROJECT: 'cicd-quickstart'
+        WANDB_ENTITY: 'aagombe7'
+        BASELINE_TAG: baseline
         
     - name: Make a comment with the GitHub API
       uses: actions/github-script@v6
