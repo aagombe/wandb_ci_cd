@@ -1,5 +1,8 @@
 name: Listen to pull request and generate wandb report
-on: issue_comment
+on: 
+  issue_comment:
+    branches:
+      - main 
 
 
 permissions:
