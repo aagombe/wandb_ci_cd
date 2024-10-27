@@ -53,7 +53,7 @@ jobs:
             title='Compare Runs',
             description="A comparing runs from pull request"
         )  
-        pg = wr.PanelGrid(runsets=[wr.Runset(ENTITY, PROJECT, "Run Comparison").set_filters_with_python_expr(f"Name in ['{baseline_run_name}', '{pr_run_name}']")], panels=[wr.RunComparer(diff_only='split', layout={'w': 24, 'h': 15})])
+        pg = wr.PanelGrid(runsets=[wr.Runset(ENTITY, PROJECT, "Run Comparison").set_filters_with_python_expr(f"Name in ['{baseline_run_name}', '{pr_run_name}']")], panels=[wr.RunComparer(diff_only='split')])
         
         report.blocks = report.blocks[:1] + [pg] + report.blocks[1:]
         report.save()
