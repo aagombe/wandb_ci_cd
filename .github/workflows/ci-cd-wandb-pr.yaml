@@ -1,8 +1,6 @@
 name: Listen to pull request and generate wandb report
 on: 
   issue_comment:
-    branches:
-      - main 
   workflow_dispatch:
 
 
