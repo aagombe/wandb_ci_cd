@@ -1,0 +1,73 @@
+name: Listen to pull request and generate wandb report
+on: issue_comment
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  
+env:
+  PR_COMMENT: "/wandb" 
+  BASELINE: ${{ secrets.BASELINE_RUN_ID }}
+  WANDB_API_KEY: ${{ secrets.WANDB_API_KEYS }}
+  
+jobs:
+  search-pr-comment: 
+    if: (github.event.issue.pull_request != null)
+    runs-on: ubuntu-latest
+    steps:
+    - name: install dependencies
+      run: pip install ghapi 
+      
+    - name: scan payload  
+      run: echo "PAYLOAD:\n${PAYLOAD}\n"
+      env:
+        PAYLOAD: ${{ toJSON(github.event) }}
+    - name: filter for wandb comment
+      id: filter
+      if: contains(github.event.comment.body, env.PR_COMMENT)
+      run: echo "wandb comment detected"
+
+    - name: Parse value from the pr command
+      if: steps.filter.outcome == 'success'
+      id: get-run-id
+      shell: python
+      run: |
+        import os, wandb
+        import wandb.apis.reports as wr
+        comment = os.getenv('PR_COMMENT', '')
+        words = comment.split(' ')
+        pr_runid = words[ words.index(${{ env.MAGIC_COMMENT }}) +1 ]
+
+        PROJECT = 'cicd-quickstart'
+        ENTITY = 'aagombe7'
+
+    - name: connect to wandb
+        api = wandb.Api()
+        baseline_run_name = api.run(f"{ENTITY}/{PROJECT}/{BASELINE}").name
+        pr_run_name = api.run("{ENTITY}/{PROJECT}/{pr_runid}").name
+
+    - name: create report  
+        report = wr.Report(
+            entity=ENTITY,
+            project=PROJECT,
+            title='Compare Runs',
+            description="A comparing runs from pull request"
+        )  
+        pg = wr.PanelGrid(runsets=[wr.Runset(ENTITY, PROJECT, "Run Comparison").set_filters_with_python_expr(f"Name in ['{baseline_run_name}', '{pr_run_name}']")], panels=[wr.RunComparer(diff_only='split', layout={'w': 24, 'h': 15})])
+        
+        report.blocks = report.blocks[:1] + [pg] + report.blocks[1:]
+        report.save()
+
+        - name: Make a comment
+        shell: python
+        run: |
+          import os
+          from ghapi.core import GhApi
+          owner,repo = os.environ['REPO'].split('/')
+          api = GhApi(owner=owner, repo=repo)
+          api.issues.create_comment(os.environ['NUMBER'], f"Hi! check the comparison in the link {report.url}")
+        env:
+          NUMBER: ${{ github.event.number }} 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        
