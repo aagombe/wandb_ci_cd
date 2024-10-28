@@ -4,7 +4,7 @@ import wandb.apis.reports as wr
 assert os.getenv('WANDB_API_KEYS'), 'You must set the WANDB_API_KEY environment variable'
 
 wandb.login(key= os.getenv('WANDB_API_KEYS'))
-def get_baseline_run(entity='aagombe7', project='cicd-quickstart', tag='baseline'):
+def get_baseline_run(entity='aagombe7-tagtechnologies', project='cicd-quickstart', tag='baseline'):
     "Get the baseline run from the project using tags"
 
     api = wandb.Api()
@@ -13,7 +13,7 @@ def get_baseline_run(entity='aagombe7', project='cicd-quickstart', tag='baseline
     return runs[0]
 
 
-def compare_runs(entity='aagombe7',
+def compare_runs(entity='aagombe7-tagtechnologies',
                  project='cicd-quickstart',
                  tag='baseline',
                  run_id=None):
