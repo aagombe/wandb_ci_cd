@@ -2,6 +2,7 @@ import os, wandb
 import wandb.apis.reports as wr
 
 assert os.getenv('WANDB_API_KEYS'), 'You must set the WANDB_API_KEY environment variable'
+WANDB_API_KEY = os.getenv('WANDB_API_KEYS')
 
 def get_baseline_run(entity='aagombe7', project='cicd-quickstart', tag='baseline'):
     "Get the baseline run from the project using tags"
