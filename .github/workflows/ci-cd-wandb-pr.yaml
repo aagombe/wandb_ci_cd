@@ -20,7 +20,7 @@ jobs:
       uses: actions/checkout@v3
 
     - name: install dependencies
-      run: pip install ghapi wandb wandb-workspaces
+      run: pip install ghapi wandb==0.15.11
       
     - name: Parse value from the command
       id: get-runid-value
