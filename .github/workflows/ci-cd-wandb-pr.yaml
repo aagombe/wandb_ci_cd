@@ -47,7 +47,7 @@ jobs:
         RUN_ID: "${{ steps.get-runid-value.outputs.RUN_ID }}"
         WANDB_API_KEYS: ${{ secrets.WANDB_API_KEYS }}
         WANDB_PROJECT: 'cicd-quickstart'
-        WANDB_ENTITY: 'aagombe7'
+        WANDB_ENTITY: 'aagombe7-tagtechnologies'
         BASELINE_TAG: baseline
         
     - name: Make a comment with the GitHub API
