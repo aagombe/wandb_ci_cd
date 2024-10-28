@@ -45,7 +45,7 @@ jobs:
       run: python generate_baseline_pr_report.py
       env:
         RUN_ID: "${{ steps.get-runid-value.outputs.RUN_ID }}"
-        WANDB_API_KEY: ${{ secrets.WANDB_API_KEYS }}
+        WANDB_API_KEYS: ${{ secrets.WANDB_API_KEYS }}
         WANDB_PROJECT: 'cicd-quickstart'
         WANDB_ENTITY: 'aagombe7'
         BASELINE_TAG: baseline
